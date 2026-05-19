@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "JanusGM": {
+      "type": "http",
+      "url": "http://HOMELAB_IP:8001/mcp/",
+      "description": "JANUS GM campaign data server — reads and writes campaign YAML files"
+    }
+  }
+}
