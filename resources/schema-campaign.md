@@ -12,7 +12,7 @@ All MCP paths are relative to `data/`. Slash convention: forward-slash only, no 
 | `campaign/npcs/` | NPC YAML files — one per NPC |
 | `campaign/ship/` | Player ship files (`ship.yaml`, `location.yaml`, `deckplan.yaml`) |
 | `campaign/corporation/` | Corporation YAML files |
-| `campaign/standby/` | Standby message YAML files |
+| `campaign/standby.yaml` | Standby screen config (single file, not a directory) |
 
 MCP read: `read_file("campaign/crew/alex_novak.yaml")`
 MCP list: `list_files("campaign/npcs")`
@@ -98,17 +98,25 @@ One YAML file per corporation. Minimal documented fields:
 
 ---
 
-## Standby YAML (`data/campaign/standby/`)
+## Standby YAML (`data/campaign/standby.yaml`)
 
-Standby messages displayed on the terminal standby screen.
+The standby screen displayed on the shared player terminal between scenes. **Single file**, not a directory of messages. Served by `/api/standby/` and rendered by the STANDBY view.
 
 | Field | Type | Note |
 |---|---|---|
-| `id` | string | Must match filename stem |
-| `message` | string | Message text displayed |
-| `priority` | enum | `LOW \| NORMAL \| HIGH \| CRITICAL` (optional) |
-| `author` | string | Source attribution (optional) |
-| `timestamp` | string | ISO 8601 timestamp string (optional) |
+| `title` | string | Large title text (e.g., `"MOTHERSHIP"`) |
+| `subtitle` | string | Smaller subtitle text below the title (e.g., `"The Outer Veil"`) |
+
+To update: write the entire file with both keys present. There is no per-message list and no `id` field.
+
+Example:
+
+```yaml
+title: "MOTHERSHIP"
+subtitle: "The Outer Veil"
+```
+
+MCP path: `read_file("campaign/standby.yaml")` / `write_file("campaign/standby.yaml", content)`.
 
 ---
 
