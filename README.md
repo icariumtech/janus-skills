@@ -15,7 +15,31 @@ locations, star systems, ships, and more — all backed by the JANUS MCP server.
 
 ## Installation
 
-### Global install (recommended)
+### Windows (PowerShell)
+
+```powershell
+git clone https://github.com/icariumtech/janus-skills.git "$env:USERPROFILE\janus-skills"
+cd "$env:USERPROFILE\janus-skills"
+.\install.ps1 -Global
+```
+
+With MCP config (prompts for homelab IP):
+```powershell
+.\install.ps1 -Global -McpConfig
+```
+
+Project-local install:
+```powershell
+.\install.ps1 -Project C:\path\to\my-campaign
+.\install.ps1 -Project C:\path\to\my-campaign -McpConfig
+```
+
+> **Note:** `install.ps1` copies files rather than symlinking. Re-run after pulling
+> repo updates to pick up changes to skills or resources.
+
+---
+
+### Linux / macOS (bash)
 
 ```bash
 git clone https://github.com/icariumtech/janus-skills.git ~/janus-skills
