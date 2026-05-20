@@ -7,8 +7,8 @@
     Copies skill directories and schema resources into the Claude Code user profile.
     Mirrors the behaviour of install.sh on Linux/macOS.
 
-    Skills go to:   %USERPROFILE%\.claude\skills\          (--Global)
-                    <path>\.claude\skills\                  (--Project <path>)
+    Skills go to:   %USERPROFILE%\.claude\skills\          (-Global)
+                    PROJECT\.claude\skills\                 (-Project PROJECT)
     Resources go to: %USERPROFILE%\.claude\janus-skills\resources\   (always)
 
     Note: uses Copy-Item, not symlinks. Re-run after pulling repo updates.
@@ -51,13 +51,13 @@ function Write-Err($msg)    { Write-Host "ERROR: $msg" -ForegroundColor Red; exi
 # Validate flags
 # --------------------------------------------------------------------------
 if ($Global -and $Project) {
-    Write-Err "-Global and -Project are mutually exclusive — choose one."
+    Write-Err "-Global and -Project are mutually exclusive. Choose one."
 }
 if (-not $Global -and -not $Project) {
-    Write-Host "Usage: .\install.ps1 [-Global] [-Project <path>] [-McpConfig]"
+    Write-Host "Usage: .\install.ps1 [-Global] [-Project PATH] [-McpConfig]"
     Write-Host ""
     Write-Host "  -Global           Install skills to %USERPROFILE%\.claude\skills\"
-    Write-Host "  -Project <path>   Install skills to <path>\.claude\skills\"
+    Write-Host "  -Project PATH     Install skills to PATH\.claude\skills\"
     Write-Host "  -McpConfig        Also inject JanusGM MCP server config into settings.json"
     exit 1
 }
@@ -96,10 +96,10 @@ New-Item -ItemType Directory -Force -Path $ResourcesDir | Out-Null
 # --------------------------------------------------------------------------
 Write-Header "Installing resources..."
 $ResourceSrc = Join-Path $RepoDir "resources"
-$ResourceFiles = Get-ChildItem -Path $ResourceSrc -Filter "*.md" -File -ErrorAction SilentlyContinue
+$ResourceFiles = @(Get-ChildItem -Path $ResourceSrc -Filter "*.md" -File -ErrorAction SilentlyContinue)
 
 if ($ResourceFiles.Count -eq 0) {
-    Write-Host "  NOTE: No .md files found in resources\ — skipping."
+    Write-Host "  NOTE: No .md files found in resources\, skipping."
 } else {
     foreach ($f in $ResourceFiles) {
         $dest = Join-Path $ResourcesDir $f.Name
@@ -113,14 +113,13 @@ if ($ResourceFiles.Count -eq 0) {
 # --------------------------------------------------------------------------
 Write-Header "Installing skills..."
 $SkillsSrc = Join-Path $RepoDir "skills"
-$SkillDirs = Get-ChildItem -Path $SkillsSrc -Directory -Filter "janus-*" -ErrorAction SilentlyContinue
+$SkillDirs = @(Get-ChildItem -Path $SkillsSrc -Directory -Filter "janus-*" -ErrorAction SilentlyContinue)
 
 if ($SkillDirs.Count -eq 0) {
-    Write-Host "  NOTE: No janus-* directories found in skills\ — skipping."
+    Write-Host "  NOTE: No janus-* directories found in skills\, skipping."
 } else {
     foreach ($dir in $SkillDirs) {
         $dest = Join-Path $SkillsDir $dir.Name
-        # Remove existing copy so Copy-Item doesn't nest inside it
         if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
         Copy-Item -Path $dir.FullName -Destination $dest -Recurse -Force
         Write-Ok "$($dir.Name) -> $SkillsDir"
@@ -133,7 +132,7 @@ if ($SkillDirs.Count -eq 0) {
 if ($McpConfig) {
     Write-Header "Configuring MCP server..."
 
-    # Require python (for JSON merge — keeps parity with install.sh)
+    # Require python (for JSON merge, keeps parity with install.sh)
     $python = Get-Command python -ErrorAction SilentlyContinue
     if (-not $python) { $python = Get-Command python3 -ErrorAction SilentlyContinue }
     if (-not $python) {
