@@ -136,7 +136,7 @@ RESOURCE_COUNT=0
 for f in "$REPO_DIR/resources/"*.md; do
   [[ -e "$f" ]] || continue  # skip if glob doesn't match (empty resources/)
   target="$RESOURCES_DIR/$(basename "$f")"
-  ln -sfn "$(realpath "$f")" "$target"
+  ln -sfn "$f" "$target"
   RESOURCE_COUNT=$((RESOURCE_COUNT + 1))
 done
 echo "Resources installed: $RESOURCE_COUNT file(s) → $RESOURCES_DIR"
@@ -145,18 +145,19 @@ echo "Resources installed: $RESOURCE_COUNT file(s) → $RESOURCES_DIR"
 # Symlink skill directories (skills/janus-*/)
 # --------------------------------------------------------------------------
 SKILL_COUNT=0
-for skill_dir in "$REPO_DIR/skills/janus-"/; do
+for skill_dir in "$REPO_DIR/skills/janus-"*/; do
   [[ -d "$skill_dir" ]] || continue  # skip if glob doesn't match (empty skills/)
   skill_name="$(basename "$skill_dir")"
   target="$SKILLS_DIR/$skill_name"
-  ln -sfn "$(realpath "$skill_dir")" "$target"
+  link_target="${skill_dir%/}"
+  ln -sfn "$link_target" "$target"
   SKILL_COUNT=$((SKILL_COUNT + 1))
 done
 echo "Skills installed   : $SKILL_COUNT skill(s) → $SKILLS_DIR"
 echo ""
 
 if [[ $SKILL_COUNT -eq 0 ]]; then
-  echo "NOTE: No skill directories found yet (skills/ is empty — run after plans 04/05 populate it)."
+  echo "NOTE: No skill directories found in $REPO_DIR/skills/ (expected skills/janus-*/ subdirectories)."
 fi
 
 # --------------------------------------------------------------------------
@@ -222,10 +223,21 @@ janus_entry["url"] = janus_entry["url"].replace("HOMELAB_IP", homelab_ip)
 # Merge: only the JanusGM key is set; all other mcpServers entries are preserved
 existing["mcpServers"]["JanusGM"] = janus_entry
 
-# Write back with 2-space indentation
-with open(settings_path, "w") as fh:
-  json.dump(existing, fh, indent=2)
-  fh.write("\n")
+# Write back atomically (tempfile + rename — survives crash mid-write)
+import tempfile
+tmp_fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(settings_path) or ".",
+                                     prefix=".settings_tmp_")
+try:
+  with os.fdopen(tmp_fd, "w") as fh:
+    json.dump(existing, fh, indent=2)
+    fh.write("\n")
+  os.replace(tmp_path, settings_path)
+except Exception:
+  try:
+    os.unlink(tmp_path)
+  except OSError:
+    pass
+  raise
 
 print("MCP config written to {}".format(settings_path))
 PYEOF
