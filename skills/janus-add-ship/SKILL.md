@@ -17,8 +17,9 @@ Create a ship entry at `data/ships/<slug>/location.yaml` using the JANUS MCP ser
 under `data/ships/` — they are NOT nested under a galaxy body directory. Instead, the `body_slug`
 and `system_slug` pointer fields in the location.yaml tell the data loader where to inject the
 ship on the orbit map at runtime. An optional deckplan stub may also be created at
-`ships/<slug>/map/main.yaml`. All write operations go through the MCP server which triggers a
-live SSE broadcast to connected terminals.
+`ships/<slug>/deckplan.yaml` using the canonical `decks:` list format defined in `schema-encounters.md`
+(the legacy `map/` directory format is NOT supported by EncounterMapDisplay). All write operations
+go through the MCP server which triggers a live SSE broadcast to connected terminals.
 </objective>
 
 <schema>
@@ -81,11 +82,24 @@ live SSE broadcast to connected terminals.
 12. Call `write_file("ships/<ship-slug>/location.yaml", content)` to register the ship.
 
 13. Ask the user if they want an empty deckplan stub. If yes, build a minimal
-    `data/ships/<ship-slug>/map/main.yaml` with an empty `rooms: []` list and call
-    `write_file("ships/<ship-slug>/map/main.yaml", stub_content)`.
+    `data/ships/<ship-slug>/deckplan.yaml` containing a single deck with no rooms:
+
+    ```yaml
+        decks:
+          - id: main_deck
+            name: Main Deck
+            level: 1
+            default: true
+            unit_size: 30
+            rooms: []
+    ```
+
+    Call `write_file("ships/<ship-slug>/deckplan.yaml", stub_content)`. Do NOT write into
+    any `map/` subdirectory — that is the legacy format and will not load in EncounterMapDisplay
+    (see schema-encounters.md → "Skills should write new format only").
 
 14. Confirm to the user:
-    - Written path: `ships/<ship-slug>/location.yaml` (and map stub if created)
+    - Written paths: `ships/<ship-slug>/location.yaml` and (if the deckplan stub was created) `ships/<ship-slug>/deckplan.yaml`
     - Pitfall P1 reminder: slug must match directory name exactly — lowercase, hyphens/underscores
     - Pitfall P5 reminder: `body_slug` must be a planet (direct system child), not a moon
     - SSE broadcast will trigger automatically; orbit map refreshes within seconds

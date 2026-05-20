@@ -27,9 +27,12 @@ the MCP server which triggers a live SSE broadcast to connected terminals.
 
 2. Call `list_files("campaign/npcs")` to enumerate existing NPC ids and avoid collision.
 
-3. Derive `id`: convert name to lowercase and replace spaces and hyphens with underscores.
-   Formula: `name.lower().replace(" ", "_").replace("-", "_")`.
-   Examples: "Captain Harrow" → `captain_harrow`, "Dr. Elena-Kim" → `dr__elena_kim`.
+3. Derive `id`: convert name to lowercase, replace spaces and hyphens with underscores, then
+   strip any character that is not `[a-z0-9_]`. This removes periods, apostrophes, accents,
+   and other punctuation that would otherwise leak into the filename stem (Pitfall P2).
+   Formula: `re.sub(r'[^a-z0-9_]', '', name.lower().replace(' ', '_').replace('-', '_'))`.
+   Examples: "Captain Harrow" → `captain_harrow`, "Dr. Elena-Kim" → `dr_elena_kim`,
+   "O'Malley" → `omalley`.
    If the derived id already exists in the listing, append a numeric suffix (`_2`, `_3`, ...)
    and warn the user that a suffix was added.
    CRITICAL (Pitfall P2): The `id:` field in the YAML must EXACTLY equal this derived id, which
