@@ -92,6 +92,12 @@ The `resources/` directory contains condensed YAML schema references installed t
 `~/.claude/janus-skills/resources/`. Each skill @-includes only the schema slice it
 needs — keeping AI context lean during campaign management sessions.
 
+> **Note:** These files are **auto-synced from `janus-console`** (`docs/schemas/`)
+> by a GitHub Action. Do not edit them here — edits will be overwritten on the next
+> sync. To change a schema, open a PR against
+> [`janus-console`](https://github.com/icariumtech/janus-console). See
+> `resources/_SYNCED_FROM_JANUS_CONSOLE.md` for details.
+
 | File | Covers |
 |------|--------|
 | `schema-campaign.md` | Crew, NPCs, corporations, standby (`data/campaign/`) |
