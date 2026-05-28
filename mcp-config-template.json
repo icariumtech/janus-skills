@@ -3,7 +3,7 @@
     "JanusGM": {
       "type": "http",
       "url": "http://HOMELAB_IP:8001/mcp/",
-      "description": "JANUS GM campaign data server — reads and writes campaign YAML files"
+      "description": "JANUS GM campaign data server. Tools: get_session_context (game state snapshot), list_files (directory listing), read_file (full YAML file), read_field (single dot-path field without loading whole file), write_file (atomic YAML write + SSE broadcast), patch_yaml (JSON merge patch — send only changed fields), append_list_item (append to a named list atomically — no read required), get_data_schema (DATA_DIRECTORY_GUIDE), get_django_url (external URL for curl uploads), upload_image (base64 image upload)"
     }
   }
 }
