@@ -5,6 +5,7 @@ argument-hint: "<body-name> <type> <parent-system> [parent-planet-for-moons]"
 allowed-tools:
   - mcp__JanusGM__list_files
   - mcp__JanusGM__read_file
+  - mcp__JanusGM__append_list_item
   - mcp__JanusGM__write_file
 ---
 
@@ -49,42 +50,42 @@ The `location_slug` in system_map.yaml or orbit_map.yaml must exactly match the 
 6. Branch on `type`:
 
    **planet or station path:**
-   a. Parse the `system_map.yaml` content from step 2. Read the `bodies[]` list.
-   b. Ask the user for body properties:
+   a. Ask the user for body properties:
       - `orbital_radius`: float, distance from star (required)
       - `orbital_period`: float, animation period in arbitrary units (required; higher = slower)
       - `size`: float, visual size (required)
-      - `color`: hex color (optional, e.g., `0x4682B4`)
+      - `color`: color as integer (optional, e.g., `4744884` for `0x4682B4`)
       - `info.description`: short description string (optional)
       - `clickable`: boolean (default `true`)
       - `has_orbit_map`: boolean (default `true` for planets, `false` for stations)
-   c. Build the bodies entry: `name`, `type`, `location_slug` (EXACT slug from step 4 — Pitfall P1),
+   b. Build the bodies entry: `name`, `type`, `location_slug` (EXACT slug from step 4 — Pitfall P1),
       plus all user-supplied fields.
-   d. Append the entry to `bodies[]`. Reconstruct full system_map.yaml preserving all existing
-      fields (star, camera, existing bodies).
-   e. Call `write_file("galaxy/<system>/system_map.yaml", updated_content)`.
+   c. Call `append_list_item("galaxy/<system>/system_map.yaml", "bodies", body_entry)`.
+      The server appends atomically to the existing bodies list and triggers SSE.
 
    **moon path:**
    a. Attempt `read_file("galaxy/<system>/<planet>/orbit_map.yaml")`.
-      If the file does not exist, build a new orbit_map.yaml scaffold:
-      - Read the planet's `location.yaml` to get the planet name.
-      - `planet` block: `name` (planet display name), `type: "planet"`, `size: 8.0`
-      - `camera` block: `position: [0, 35, 58]`, `lookAt: [0, 0, 0]`, `fov: 60`
-      - `moons: []`
+      - If the file **exists**: use `append_list_item` in step 6d — skip scaffolding.
+      - If the file **does not exist**: build a new orbit_map.yaml scaffold using the planet
+        name from step 3 (already read):
+        - `planet` block: `name` (planet display name), `type: "planet"`, `size: 8.0`
+        - `camera` block: `position: [0, 35, 58]`, `lookAt: [0, 0, 0]`, `fov: 60`
+        - `moons: []`
    b. Ask the user for moon properties:
       - `orbital_radius`: float (required)
       - `orbital_period`: float (required; higher = slower)
       - `orbital_angle`: float in degrees (optional, default 0)
       - `inclination`: float in degrees (optional, default 0)
       - `size`: float (required)
-      - `color`: hex color (optional)
+      - `color`: color as integer (optional)
       - `has_facilities`: boolean (default `false`)
       - `clickable`: boolean (default `false`)
    c. Build the moon entry: `name`, `location_slug` (EXACT slug from step 4), and all
       user-supplied fields.
-   d. Append the entry to `moons[]`. Reconstruct full orbit_map.yaml preserving all existing
-      fields (planet block, camera, existing moons).
-   e. Call `write_file("galaxy/<system>/<planet>/orbit_map.yaml", updated_content)`.
+   d. If orbit_map.yaml **existed**: call `append_list_item("galaxy/<system>/<planet>/orbit_map.yaml",
+      "moons", moon_entry)`. The server appends atomically.
+      If orbit_map.yaml **did not exist**: add moon_entry to the scaffolded `moons: []` list
+      and call `write_file("galaxy/<system>/<planet>/orbit_map.yaml", scaffold_content)`.
 
 7. Build the `location.yaml` content for the new body:
    Required fields: `name`, `type` (planet/moon/station), `parent_system` (the system slug),
