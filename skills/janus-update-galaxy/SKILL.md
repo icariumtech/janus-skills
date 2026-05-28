@@ -18,10 +18,6 @@ or edit-system), then write the modified file back via the MCP server. All top-l
 systems or system directories — use `/janus-add-system` for that.
 </objective>
 
-<schema>
-@$HOME/.claude/janus-skills/resources/schema-galaxy.md
-</schema>
-
 <process>
 1. Parse `$ARGUMENTS` for an action keyword. Valid values: `add-nebula`, `add-route`,
    `edit-system`. If the argument is missing or unrecognised, list the three options and ask the

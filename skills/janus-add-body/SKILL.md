@@ -24,10 +24,6 @@ All writes go through the JANUS MCP server. Slugs must be lowercase + hyphens (P
 The `location_slug` in system_map.yaml or orbit_map.yaml must exactly match the directory name.
 </objective>
 
-<schema>
-@$HOME/.claude/janus-skills/resources/schema-galaxy.md
-</schema>
-
 <process>
 1. Parse `$ARGUMENTS`: body name, type (`planet | moon | station`), parent system slug.
    If type is `moon`, also expect a parent planet slug. Ask for any missing required arguments.

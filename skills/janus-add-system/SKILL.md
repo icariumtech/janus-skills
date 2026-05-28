@@ -21,10 +21,6 @@ All writes go through the JANUS MCP server which triggers live SSE broadcasts. T
 be lowercase + hyphens only — a case mismatch silently breaks location discovery (Pitfall P1).
 </objective>
 
-<schema>
-@$HOME/.claude/janus-skills/resources/schema-galaxy.md
-</schema>
-
 <process>
 1. Parse `$ARGUMENTS` for system name and optional 3D coordinates `[x, y, z]`.
 

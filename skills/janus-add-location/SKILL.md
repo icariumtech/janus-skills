@@ -23,10 +23,6 @@ skill redirects to `/janus-add-ship` and aborts. All write operations go through
 which triggers a live SSE broadcast.
 </objective>
 
-<schema>
-@$HOME/.claude/janus-skills/resources/schema-galaxy.md
-</schema>
-
 <process>
 1. Parse `$ARGUMENTS` for location name, optional type, and optional parent system slug.
 

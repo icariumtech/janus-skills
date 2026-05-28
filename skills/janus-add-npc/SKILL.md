@@ -18,10 +18,6 @@ mismatch will cause the NPC to be silently skipped (Pitfall P2). All write opera
 the MCP server which triggers a live SSE broadcast to connected terminals.
 </objective>
 
-<schema>
-@$HOME/.claude/janus-skills/resources/schema-campaign.md
-</schema>
-
 <process>
 1. Parse `$ARGUMENTS` for NPC name, and optional faction and role hints.
 

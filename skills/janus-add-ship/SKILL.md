@@ -22,10 +22,6 @@ ship on the orbit map at runtime. An optional deckplan stub may also be created 
 go through the MCP server which triggers a live SSE broadcast to connected terminals.
 </objective>
 
-<schema>
-@$HOME/.claude/janus-skills/resources/schema-ships.md
-</schema>
-
 <process>
 1. Parse `$ARGUMENTS` for: ship name (required), optional system slug (parent system), optional
    body slug (parent planet). If any are missing, prompt the user before continuing.

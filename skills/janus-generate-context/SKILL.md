@@ -22,12 +22,6 @@ AI terminal and by `/janus-session-prep`. Write operations go through the MCP se
 automatically trigger an SSE broadcast — the JANUS terminal refreshes without a manual reload.
 </objective>
 
-<schema>
-@$HOME/.claude/janus-skills/resources/schema-galaxy.md
-
-@$HOME/.claude/janus-skills/resources/schema-janus-context.md
-</schema>
-
 <process>
 1. Parse `$ARGUMENTS`:
    - `location-path`: path relative to `data/`, e.g., `galaxy/anchor-system/veil-station` or

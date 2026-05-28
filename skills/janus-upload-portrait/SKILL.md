@@ -3,7 +3,8 @@ name: janus-upload-portrait
 description: "Upload an NPC portrait from a local file. Saves to images_source/ and runs amber-gradient conversion by default."
 argument-hint: "<path-to-image-file>"
 allowed-tools:
-  - mcp__JanusGM__upload_image
+  - mcp__JanusGM__get_django_url
+  - Bash
 ---
 
 @$HOME/.claude/janus-skills/resources/schema-campaign.md
@@ -23,28 +24,32 @@ display-ready version yet.
 1. Verify that `$ARGUMENTS` is a path to an existing local image file. If the file does not exist,
    stop and report the missing path to the user before continuing.
 
-2. Extract the basename (no directory component) from the path — this becomes the `filename`
-   parameter. For example, `/home/user/captain_harrow.jpg` yields `filename="captain_harrow.jpg"`.
+2. Extract the basename (no directory component) from the path — this becomes `<filename>`.
+   For example, `C:\Users\gabe\Pictures\captain_harrow.jpg` yields `filename="captain_harrow.jpg"`.
 
-3. Read the file as binary and encode it to base64. Use the Python one-liner:
-   `python3 -c "import base64, sys; print(base64.b64encode(open(sys.argv[1],'rb').read()).decode())" "$ARGUMENTS"`
-   or the shell equivalent: `base64 "$ARGUMENTS"` (Linux/macOS). Capture the output as
-   `content_base64`.
+3. Call `get_django_url()` to retrieve the Django base URL (e.g. `http://icarium.local:8000`).
 
-4. Call `upload_image(filename=<basename>, content_base64=<encoded>, image_type="portrait", convert=true)`.
-   The `convert=true` default triggers the amber-gradient conversion pipeline. The tool returns
-   `saved_path`, `converted_path` (present when conversion succeeds), and `original_size_bytes`.
+4. Upload the file directly using curl — do NOT read the file or attempt base64 encoding
+   under any circumstances. Binary data must never pass through the tool pipeline:
 
-5. Report the results to the user: the `saved_path` (source file location in `images_source/`),
-   the `converted_path` (display-ready portrait, e.g. `data/campaign/NPCs/images/captain_harrow.png`),
-   and `original_size_bytes`. If a `conversion_warning` key is present in the response, surface
-   it verbatim so the user knows about any conversion issues.
+   ```
+   curl.exe -s -X POST -F "file=@<path>" -F "filename=<filename>" -F "image_type=portrait" -F "convert=true" <django_url>/api/gm/upload-image/
+   ```
+
+   On Windows the command is identical — `curl` resolves to `curl.exe` automatically.
+   File paths with spaces must be quoted: `-F "file=@\"C:\path with spaces\file.jpg\""`.
+
+5. Parse the JSON response. Report to the user:
+   - `saved_path` — source file location in `images_source/`
+   - `converted_path` — display-ready portrait (e.g. `campaign/NPCs/images/captain_harrow.png`)
+   - `original_size_bytes`
+   If a `conversion_warning` key is present, surface it verbatim.
+   On HTTP error, report the status code and response body.
 
 6. Remind the user that the `portrait` field in the NPC YAML should reference the converted image
    path (e.g. `portrait: "NPCs/images/captain_harrow.png"`), NOT the `images_source` path. Use
    `/janus-add-npc` or edit the NPC YAML directly to set this field.
 </process>
 
-**Note:** To skip conversion and save the raw source only, call the tool with `convert=false`.
-Conversion can be triggered later by running this skill again on the same file with `convert=true`
-(or by omitting the `convert` argument, since `true` is the default).
+**Note:** To skip conversion and save the raw source only, pass `-F "convert=false"` in the curl
+command. Conversion can be triggered later by re-running this skill with `convert=true` (the default).

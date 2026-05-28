@@ -4,7 +4,6 @@ description: "Upload a logo, map, or miscellaneous image asset to the campaign d
 argument-hint: "<path-to-image-file> <image_type>"
 allowed-tools:
   - mcp__JanusGM__get_django_url
-  - mcp__JanusGM__upload_image
   - Bash
 ---
 
@@ -32,7 +31,8 @@ types. For NPC portraits (amber-gradient conversion), use `/janus-upload-portrai
 
 3. Call `get_django_url()` to retrieve the Django base URL (e.g. `http://192.168.1.42:8000`).
 
-4. Upload the file directly using curl — no base64 encoding, no MCP tool pipeline:
+4. Upload the file directly using curl — do NOT read the file or attempt base64 encoding
+   under any circumstances. Binary data must never pass through the tool pipeline:
 
    ```
    curl -s -X POST -F "file=@<path>" -F "filename=<filename>" -F "image_type=<image_type>" <django_url>/api/gm/upload-image/

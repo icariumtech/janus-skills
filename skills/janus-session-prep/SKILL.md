@@ -10,6 +10,8 @@ allowed-tools:
 
 @$HOME/.claude/janus-skills/resources/schema-janus-context.md
 
+@$HOME/.claude/janus-skills/resources/schema-campaign.md
+
 # /janus-session-prep
 
 <objective>
@@ -18,10 +20,6 @@ with persisted `janus.yaml` context files and NPC data. This is a READ-ONLY skil
 call `write_file` and produces no output files. The brief is printed directly to the chat for the
 GM to reference at the table. No file writes occur.
 </objective>
-
-<schema>
-@$HOME/.claude/janus-skills/resources/schema-janus-context.md
-</schema>
 
 <process>
 1. Parse the optional `$ARGUMENTS` focus-area. Recognised values:
