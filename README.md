@@ -84,6 +84,7 @@ Installs skills to `<path>/.claude/skills/` instead. Resources always go to
 | `/janus-add-system` | Add a star system entry to `star_map.yaml` and create the system directory with `system_map.yaml` | `/janus-add-system Proxima Centauri` |
 | `/janus-add-body` | Add a planet, moon, or station to an existing system — updates `system_map.yaml` and `orbit_map.yaml` | `/janus-add-body Tau Ceti f, type planet` |
 | `/janus-add-ship` | Register a new ship in `data/ships/` with `location.yaml` (body_slug, system_slug for orbit injection) | `/janus-add-ship USCSS Morrigan` |
+| `/janus-player-ship` | Set up or reconfigure the player's ship at `data/campaign/ship/` — identity, systems, resources, cargo, location.yaml | `/janus-player-ship USCSS Morrigan` |
 | `/janus-update-galaxy` | Edit `star_map.yaml` for nebulae, travel routes, and star system visual properties | `/janus-update-galaxy add nebula The Veil` |
 
 ## Schema Resources
