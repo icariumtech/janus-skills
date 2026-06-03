@@ -1,7 +1,7 @@
 ---
 name: janus-import-deckplan
-description: "Import an SVG deckplan for a ship or location. Converts the SVG via svg_to_map.py, then writes or appends a deck entry to deckplan.yaml. Use when adding one or more decks from Inkscape SVG files."
-argument-hint: "<location-path> [deck-name] [grid-scale]"
+description: "Import an SVG deckplan for a ship or location. Converts the SVG via svg_to_map.py, then writes or appends deck entries to deckplan.yaml. A single multi-deck SVG can populate all decks at once."
+argument-hint: "<location-path> [grid-scale]"
 allowed-tools:
   - mcp__JanusGM__upload_svg_map
   - mcp__JanusGM__read_file
@@ -14,38 +14,46 @@ allowed-tools:
 # /janus-import-deckplan
 
 <objective>
-Convert an Inkscape SVG deckplan file into a JANUS deckplan entry and write it to the correct
+Convert an Inkscape SVG deckplan file into JANUS deckplan entries and write them to the correct
 `deckplan.yaml` under the target ship or location. Supports both creating a fresh `deckplan.yaml`
-and appending a new deck to an existing one. The SVG is uploaded via the JANUS MCP server
-(which runs `svg_to_map.py`), the generated legacy deck YAML is read back, and the result is
+and appending new decks to an existing one. The SVG is uploaded via the JANUS MCP server
+(which runs `svg_to_map.py`), the generated deck YAML(s) are read back, and the result is
 folded into the canonical `deckplan.yaml` format (a single file with a `decks:` list).
 
-Always write the new `deckplan.yaml` format. Never write the legacy `map/manifest.yaml` format.
+A single SVG may produce one deck (single-deck mode) or multiple decks (multi-deck mode) —
+the mode is auto-detected from the SVG layer structure. Always write the new `deckplan.yaml`
+format. Never write the legacy `map/manifest.yaml` format.
 </objective>
 
 <svg-requirements>
-The SVG must be an Inkscape file with the following layer structure (layers identified by
-`inkscape:label`, NOT the SVG `id` attribute):
+The SVG must be an Inkscape file. Layers are identified by `inkscape:label` (set via
+**Object Properties → Label** in Inkscape — NOT the XML `id` field).
 
-- **Rooms** layer — one `<path>` per room; each path's `inkscape:label` = the room name
-  (e.g. `"Engine Room"`). This becomes the room's display name and its slug id.
-- **Corridors** layer — one `<path>` per corridor; `inkscape:label` is optional (auto-named
-  `corridor_1`, `corridor_2`, … if absent).
-- **Hull** layer — optional single path for the hull outline.
+The SVG must have a rectangular grid configured (File → Document Properties → Grids).
 
-Label paths via **Object Properties → Label** in Inkscape (not the XML `id` field).
-The label controls what appears in the JANUS map. An unlabelled room in the Rooms layer
-gets a generic id and name — warn the user if this happens (visible in the conversion log).
+**Single-deck SVG** (flat layers):
+- **Rooms** layer — one `<path>` per room; `inkscape:label` = room name (e.g. `"Engine Room"`)
+- **Corridors** layer — one `<path>` per corridor; label optional (auto-named `corridor_1`, …)
+- **Hull** layer — optional single path for the hull outline
 
-Grid unit is read from the `inkscape:grid spacingx` attribute. The SVG must have a grid
-configured (File → Document Properties → Grids → add a rectangular grid).
+**Multi-deck SVG** (nested layers — auto-detected):
+- **Hull** layer — optional top-level hull outline
+- **`<Deck Label>`** layer — one per deck (e.g. `"Main Deck"`, `"Engineering Deck"`, `"Bridge"`)
+  - **Rooms** sublayer — room paths within this deck
+  - **Corridors** sublayer — corridor paths within this deck
+- Additional deck layers follow the same pattern
+
+Multi-deck mode is triggered automatically when any top-level layer contains `Rooms` or
+`Corridors` sublayers. Deck IDs and names are derived from the layer labels (snake-cased).
+The first deck layer in document order becomes the default deck.
+
+Warn the user if any room path lacks a label — it will get a generic id/name in the output.
 </svg-requirements>
 
 <process>
 ## Step 1 — Gather inputs
 
-Parse `$ARGUMENTS` for location path (first token), optional deck name (remaining tokens),
-and optional `grid_scale` if the user wrote it as a number at the end.
+Parse `$ARGUMENTS` for location path (first token) and optional `grid_scale` (a number).
 
 Ask for anything not supplied:
 
@@ -54,20 +62,23 @@ Ask for anything not supplied:
    - Galaxy location: `galaxy/<system>/<body>/<slug>` (e.g. `galaxy/tau-ceti/tau-ceti-f/somnus`)
    - Player ship: `campaign/ship`
 
-2. **Deck name** — human-readable display name (e.g. `"Main Deck"`, `"Lower Deck"`, `"Cargo Hold"`).
-   Derive `deck_id` as snake_case: `"Main Deck"` → `main_deck`.
+2. **SVG file path** — absolute or `~/`-prefixed path on the local machine.
 
-3. **Deck level** — integer sort key; 1 = lowest deck. If appending to an existing deckplan,
-   suggest the next unused level (existing max + 1).
-
-4. **SVG file path** — absolute or `~/`-prefixed path on the local machine.
-
-5. **grid_scale** (default 1) — number of Inkscape grid cells to group into one output cell.
+3. **grid_scale** (default 1) — number of Inkscape grid cells to group into one output cell.
    Explain: start with 1; after seeing the conversion log, adjust if rooms are too large or small.
    Target: largest room should be roughly 8–12 cells wide.
 
-6. **detect_doors** (default false) — whether to auto-detect doors from shared SVG edges.
+4. **detect_doors** (default false) — whether to auto-detect doors from shared SVG edges.
    Mention: works best for clean polygon rooms with no overlapping geometry.
+
+For **single-deck SVGs only**, also ask:
+5. **Deck name** — human-readable display name (e.g. `"Main Deck"`, `"Lower Deck"`).
+   Derive `deck_id` as snake_case. If the user doesn't know their SVG type yet, skip this
+   for now — you can determine the deck name from the manifest after conversion.
+
+6. **Deck level** — integer sort key; 1 = lowest deck. If appending to an existing deckplan,
+   suggest the next unused level (existing max + 1). Skip for multi-deck SVGs (levels are
+   assigned automatically by document order, starting after any existing decks).
 
 ## Step 2 — Validate the location
 
@@ -83,12 +94,12 @@ If the location doesn't exist, stop and tell the user:
 
 Call `read_file("<location-path>/deckplan.yaml")`.
 
-- **File not found → create mode**: a fresh `deckplan.yaml` will be written with this deck
-  as the only entry. It will be marked `default: true`.
-- **File found → append mode**: the new deck will be added to the existing `decks:` list.
-  Read the current decks to find the next available level and confirm no `id` collision.
-  If a deck with the same `deck_id` already exists, stop and ask the user to choose a
-  different deck name.
+- **File not found → create mode**: a fresh `deckplan.yaml` will be written.
+  The first deck (or the only deck) will be marked `default: true` and assigned `level: 1`.
+- **File found → append mode**: new decks will be added to the existing `decks:` list.
+  Read the current decks to find the next available level. Confirm no `id` collisions —
+  if any incoming deck id already exists, stop and ask the user to resolve it (rename the
+  SVG layer or choose a different location path).
 
 ## Step 4 — Read and base64-encode the SVG
 
@@ -99,7 +110,6 @@ using curl directly:
 curl -X POST http://<server>/api/gm/upload-svg-map/ \
   -F file=@<path-to-svg> \
   -F out_dir=<location-path> \
-  -F deck=<deck_id> \
   -F grid_scale=<N>
 ```
 
@@ -109,7 +119,7 @@ Call `upload_svg_map` with:
 - `filename`: the SVG filename (basename only, e.g. `patrol_gunboat.svg`)
 - `content_base64`: the base64-encoded SVG bytes
 - `out_dir`: the location path (e.g. `ships/patrol_gunboat`)
-- `deck`: the `deck_id`
+- `deck`: the `deck_id` (used only in single-deck mode; ignored for multi-deck SVGs)
 - `unit_size`: 30 (default — controls rendered pixel size, not cell counts)
 - `grid_scale`: as specified
 - `detect_doors`: as specified
@@ -132,31 +142,43 @@ If adjustment is recommended, ask the user to confirm the new grid_scale, then r
 `upload_svg_map` with the updated value before continuing. The re-upload overwrites the
 previous intermediate files.
 
-## Step 7 — Read the generated deck YAML
+## Step 7 — Detect conversion mode and read deck YAML(s)
 
-The conversion writes a legacy-format deck file at `<location-path>/map/<deck_id>.yaml`.
-Call `read_file("<location-path>/map/<deck_id>.yaml")` to retrieve it.
+Inspect the `files_created` list from the response.
 
-Extract from it:
-- `unit_size` — integer
-- `rooms` — the full list of room entries
-- `doors` — the list of door entries (may be absent or commented-out if `detect_doors` was false)
+Count the `map/*.yaml` files (excluding `map/manifest.yaml`):
+
+**Multi-deck** (count ≥ 2):
+- Read `<location-path>/map/manifest.yaml` to get the ordered deck list (ids, names, levels).
+- For each deck in the manifest's `decks:` list, call
+  `read_file("<location-path>/map/<deck_id>.yaml")`.
+- Extract `unit_size`, `rooms`, and `doors` from each file.
+- Deck names and ids come from the manifest — do not ask the user for them.
+
+**Single-deck** (count = 1):
+- Read `<location-path>/map/<deck_id>.yaml` (the one non-manifest deck file).
+- Extract `unit_size`, `rooms`, and `doors`.
+- Use the deck name/level from Step 1 (or ask now if not yet collected).
 
 ## Step 8 — Build the deckplan.yaml
 
-Construct a deck entry in the new format:
+For each deck (in manifest order for multi-deck; the single deck otherwise), construct an entry:
 
 ```yaml
 - id: <deck_id>
   name: "<Deck Name>"
   level: <level>
-  default: <true if this is the only/first deck, else false>
+  default: <true for first/only deck, false otherwise>
   unit_size: <unit_size>
   rooms:
     <rooms from step 7>
   doors:
     <doors from step 7, omit key if empty>
 ```
+
+**Level assignment:**
+- Create mode: start at 1 and increment per deck (in manifest order).
+- Append mode: start at (existing max level + 1) and increment.
 
 **Create mode**: build a full `deckplan.yaml`:
 ```yaml
@@ -170,9 +192,9 @@ decks:
       ...
 ```
 
-**Append mode**: parse the existing `deckplan.yaml`, add the new deck entry to the `decks:`
-list (insert in ascending `level` order), and reconstruct the full file. Preserve all existing
-deck entries exactly — only append, never modify existing decks.
+**Append mode**: parse the existing `deckplan.yaml`, add the new deck entry (or entries)
+to the `decks:` list in ascending `level` order, and reconstruct the full file.
+Preserve all existing deck entries exactly — only append, never modify existing decks.
 
 ## Step 9 — Write deckplan.yaml
 
@@ -185,12 +207,8 @@ legacy format and is never written by skills.
 
 Report to the user:
 - Written path: `<location-path>/deckplan.yaml`
-- Deck added: `<deck_id>` — `<Deck Name>` (level <N>)
-- Room count and corridor count
+- For each deck added: `<deck_id>` — `<Deck Name>` (level <N>), room count, corridor count
 - Whether doors were auto-detected
-- If more decks need to be imported: remind them to run `/janus-import-deckplan` again
-  with the same location path and the next deck's SVG file
-
-Note: The intermediate files in `<location-path>/map/` are conversion artifacts and can
-be deleted, but leaving them is harmless — they are not loaded by EncounterMapDisplay.
+- Note: the intermediate files in `<location-path>/map/` are conversion artifacts and can
+  be deleted, but leaving them is harmless — they are not loaded by EncounterMapDisplay
 </process>
