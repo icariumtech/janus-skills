@@ -142,23 +142,14 @@ If adjustment is recommended, ask the user to confirm the new grid_scale, then r
 `upload_svg_map` with the updated value before continuing. The re-upload overwrites the
 previous intermediate files.
 
-## Step 7 — Detect conversion mode and read deck YAML(s)
+## Step 7 — Read the generated deckplan
 
-Inspect the `files_created` list from the response.
+Call `read_file("<location-path>/deckplan.yaml")`.
 
-Count the `map/*.yaml` files (excluding `map/manifest.yaml`):
-
-**Multi-deck** (count ≥ 2):
-- Read `<location-path>/map/manifest.yaml` to get the ordered deck list (ids, names, levels).
-- For each deck in the manifest's `decks:` list, call
-  `read_file("<location-path>/map/<deck_id>.yaml")`.
-- Extract `unit_size`, `rooms`, and `doors` from each file.
-- Deck names and ids come from the manifest — do not ask the user for them.
-
-**Single-deck** (count = 1):
-- Read `<location-path>/map/<deck_id>.yaml` (the one non-manifest deck file).
-- Extract `unit_size`, `rooms`, and `doors`.
-- Use the deck name/level from Step 1 (or ask now if not yet collected).
+The conversion always writes a complete `deckplan.yaml` in canonical format — one file
+containing all decks regardless of single- or multi-deck mode. Extract the full `decks:`
+list from it. Deck ids and names for multi-deck SVGs come from the SVG layer labels and
+are already in the file; no additional input is needed from the user.
 
 ## Step 8 — Build the deckplan.yaml
 
@@ -209,6 +200,5 @@ Report to the user:
 - Written path: `<location-path>/deckplan.yaml`
 - For each deck added: `<deck_id>` — `<Deck Name>` (level <N>), room count, corridor count
 - Whether doors were auto-detected
-- Note: the intermediate files in `<location-path>/map/` are conversion artifacts and can
-  be deleted, but leaving them is harmless — they are not loaded by EncounterMapDisplay
+- The SVG file saved at `<location-path>/<filename>.svg` is kept for future re-conversion
 </process>
