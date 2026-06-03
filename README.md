@@ -1,8 +1,8 @@
 # JANUS Skills
 
 Claude Code skill library for AI-driven campaign data management with the JANUS GM tool
-(`github.com/icariumtech/janus-skills`). Eight `/janus-*` slash commands let you add NPCs,
-locations, star systems, ships, and more — all backed by the JANUS MCP server.
+(`github.com/icariumtech/janus-skills`). Nine `/janus-*` slash commands let you add NPCs,
+locations, star systems, ships, import deckplans, and more — all backed by the JANUS MCP server.
 
 ## Prerequisites
 
@@ -86,6 +86,7 @@ Installs skills to `<path>/.claude/skills/` instead. Resources always go to
 | `/janus-add-ship` | Register a new ship in `data/ships/` with `location.yaml` (body_slug, system_slug for orbit injection) | `/janus-add-ship USCSS Morrigan` |
 | `/janus-player-ship` | Set up or reconfigure the player's ship at `data/campaign/ship/` — identity, systems, resources, cargo, location.yaml | `/janus-player-ship USCSS Morrigan` |
 | `/janus-update-galaxy` | Edit `star_map.yaml` for nebulae, travel routes, and star system visual properties | `/janus-update-galaxy add nebula The Veil` |
+| `/janus-import-deckplan` | Upload an Inkscape SVG deckplan, convert it via `svg_to_map.py`, and write/append to `deckplan.yaml` — run once per deck | `/janus-import-deckplan ships/patrol_gunboat Main Deck` |
 
 ## Schema Resources
 
