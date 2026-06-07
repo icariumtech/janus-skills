@@ -1,6 +1,6 @@
 ---
 name: janus-upload-portrait
-description: "Upload an NPC portrait from a local file. Saves to images_source/ and runs amber-gradient conversion by default."
+description: "Upload an NPC portrait from a local file. Saves the original to images/sources/ and runs amber-gradient conversion by default."
 argument-hint: "<path-to-image-file>"
 allowed-tools:
   - mcp__JanusGM__get_django_url
@@ -12,10 +12,10 @@ allowed-tools:
 # /janus-upload-portrait
 
 <objective>
-Upload a portrait image file for an NPC and save it to `data/campaign/NPCs/images_source/`. By
+Upload a portrait image file for an NPC and save it to `data/campaign/images/sources/`. By
 default this skill also runs the amber-gradient conversion pass — a 512x512 center crop with an
-amber tint — which produces the display-ready portrait at `data/campaign/NPCs/images/<stem>.png`.
-The raw source file is always preserved in `images_source/` regardless of whether conversion is
+amber tint — which produces the display-ready portrait at `data/campaign/images/portraits/<stem>.png`.
+The raw source file is always preserved in `images/sources/` regardless of whether conversion is
 requested. Use `convert=false` only when you want to store a source image without producing a
 display-ready version yet.
 </objective>
@@ -40,15 +40,15 @@ display-ready version yet.
    File paths with spaces must be quoted: `-F "file=@\"C:\path with spaces\file.jpg\""`.
 
 5. Parse the JSON response. Report to the user:
-   - `saved_path` — source file location in `images_source/`
-   - `converted_path` — display-ready portrait (e.g. `campaign/NPCs/images/captain_harrow.png`)
+   - `saved_path` — source file location in `images/sources/`
+   - `converted_path` — display-ready portrait (e.g. `campaign/images/portraits/captain_harrow.png`)
    - `original_size_bytes`
    If a `conversion_warning` key is present, surface it verbatim.
    On HTTP error, report the status code and response body.
 
 6. Remind the user that the `portrait` field in the NPC YAML should reference the converted image
-   path (e.g. `portrait: "NPCs/images/captain_harrow.png"`), NOT the `images_source` path. Use
-   `/janus-add-npc` or edit the NPC YAML directly to set this field.
+   path (e.g. `portrait: "/data/campaign/images/portraits/captain_harrow.png"`), NOT the
+   `images/sources` path. Use `/janus-add-npc` or edit the NPC YAML directly to set this field.
 </process>
 
 **Note:** To skip conversion and save the raw source only, pass `-F "convert=false"` in the curl

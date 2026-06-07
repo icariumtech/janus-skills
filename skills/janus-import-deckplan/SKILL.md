@@ -200,5 +200,5 @@ Report to the user:
 - Written path: `<location-path>/deckplan.yaml`
 - For each deck added: `<deck_id>` — `<Deck Name>` (level <N>), room count, corridor count
 - Whether doors were auto-detected
-- The SVG file saved at `<location-path>/<filename>.svg` is kept for future re-conversion
+- The original SVG, saved at `campaign/images/sources/<filename>` (alongside portrait sources), is kept for future re-conversion
 </process>
