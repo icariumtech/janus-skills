@@ -38,6 +38,11 @@ the MCP server which triggers a live SSE broadcast to connected terminals.
    `status` must be one of: `ACTIVE | INACTIVE | DECEASED | UNKNOWN`. Default to `ACTIVE` if
    the user confirms they want the NPC active; otherwise ask explicitly.
 
+   Also ask whether the players have already **met** this NPC. `met: true` makes the NPC appear
+   in the player terminal's Personnel section; absent/`false` keeps it hidden from players (the GM
+   still sees it). Default to **hidden** (`met: false`) unless the user says the players have met
+   them. The GM can flip this later from the NPC Portraits panel.
+
 5. Ask the user whether this NPC is a **background NPC** (minimal) or a **combatant/significant NPC**
    (full stats). Background NPCs need only: `id`, `name`, `role`, `faction`, `status`, `description`.
    Full NPCs additionally need: `class`, `stats`, `saves`, `stress`, `health`, `wounds`, `armor`.
@@ -59,6 +64,7 @@ the MCP server which triggers a live SSE broadcast to connected terminals.
    description). Place `id:` as the first field — it must match the filename stem exactly (Pitfall P2).
    For background NPCs, output only the 6 required fields plus any provided optionals.
    For combatant NPCs, include the full stats/saves/health block.
+   Include `met: true` only when the players have met the NPC; otherwise omit it (hidden default).
 
 8. Call `write_file("campaign/npcs/<id>.yaml", content)` where `<id>` is the derived id from step 3.
 
