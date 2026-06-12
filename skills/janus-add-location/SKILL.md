@@ -39,8 +39,9 @@ which triggers a live SSE broadcast.
      `data/galaxy/<parent-system>/`). The moon's `location.yaml` lives one level deeper
      than a planet's — at `galaxy/<parent-system>/<parent-planet-slug>/<moon-slug>/location.yaml`.
      Verify the parent planet exists by calling
-     `list_files("galaxy/<parent-system>/<parent-planet-slug>")` — if the call fails or
-     returns empty, refuse with: "Parent planet '<parent_planet_slug>' not found under
+     `list_files("galaxy/<parent-system>/<parent-planet-slug>")` — a real planet directory
+     always contains at least `location.yaml`, so if this returns an empty list the planet
+     does not exist. Refuse with: "Parent planet '<parent_planet_slug>' not found under
      system '<parent-system>'. Add the planet first via this skill before adding moons."
    - If type is `planet` or `station`: proceed without additional prompts. The location
      will live at `galaxy/<parent-system>/<location-slug>/location.yaml`.
@@ -49,8 +50,9 @@ which triggers a live SSE broadcast.
    provided in arguments.
 
 4. Call `list_files("galaxy/<parent-system>")` to enumerate sibling directory slugs and verify
-   the parent system exists. If the MCP call fails or returns an empty/error response, the parent
-   system does not exist — instruct the user to run `/janus-add-system` first and abort.
+   the parent system exists. A real system directory is never empty (it holds child bodies
+   and/or `star_map.yaml`), so an empty list means the parent system does not exist — instruct
+   the user to run `/janus-add-system` first and abort.
 
 5. Derive the slug from the location name:
    - Convert to lowercase
