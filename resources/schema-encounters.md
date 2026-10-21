@@ -60,6 +60,7 @@ candidates so you can ask the GM which one.
 |---|---|---|---|
 | `hull` | mapping | no | Shared/manifest hull outline — see **Hull fields** below |
 | `decks` | list | yes | List of deck entries |
+| `default_view` | mapping | no | Location-level initial map view applied when the GM loads this location - see the `default_view` table below |
 
 ### Hull fields
 
@@ -75,6 +76,27 @@ A hull mapping (top-level or per-deck, see below) accepts:
 (shared silhouette + disjoint modules). At least one of `polygon`/`polygons` must be present for
 the hull to render.
 
+### Default view fields
+
+Optional `default_view` mapping at the location root (next to `decks:`) sets the initial map view:
+
+| Field | Type | Required | Note |
+|---|---|---|---|
+| `projection` | enum | no | `top-down` or `iso`. Default `top-down` |
+| `rotation_offset` | integer | no | `0`, `90`, `180` or `270` degrees. Default `0`. A relative turn added on top of every deck's `rotation`; positive turns the ship clockwise on screen |
+
+Applied once when the GM loads a different location; NOT re-applied on deck switches or when the GM
+leaves and re-enters the same location. After that the GM controls the view live and every player
+follows. An invalid value falls back to its default for that field only and is logged - it never
+blocks the location from loading.
+
+```yaml
+default_view: {projection: iso, rotation_offset: 90}
+decks:
+  - id: main_deck
+    ...
+```
+
 ### Deck entry fields
 
 | Field | Type | Required | Note |
@@ -83,7 +105,8 @@ the hull to render.
 | `name` | string | yes | Display name |
 | `level` | integer | yes | Sort key — 1 = lowest deck |
 | `default` | boolean | no | First deck shown on load |
-| `unit_size` | integer | no | Pixels per grid cell (default 30) |
+| `rotation` | integer | no | Absolute authored orientation of this deck in degrees: 0 (default), 90, 180 or 270. Top-down: the drawing is rotated on screen. Isometric: folded into the grid angle so floors keep true 30-degree axes. Different from `default_view.rotation_offset` - see P3 |
+| `unit_size` | integer | no | Pixels per grid cell. Renderer falls back to 40 when omitted; tools (svg_to_map.py, upload_svg_map, janus-skills) write 30 explicitly - keep writing it explicitly |
 | `hull` | mapping | no | Deck-level hull (same shape as top-level, see **Hull fields**) — renders **in addition to** the top-level hull. The top-level hull is the shared silhouette drawn on every deck; a deck hull only adds geometry (pods, nacelles), it never replaces or shrinks the shared outline. |
 | `rooms` | list | yes | List of room entries (see GridRoom fields) |
 | `doors` | list | no | Top-level door definitions (see Door fields) |
@@ -197,6 +220,11 @@ POIs are entries in a room's `poi:` list. The backend auto-generates `id`, `room
 | `hazard` | red | Dangers, environmental threats |
 | `npc` | teal | NPC markers |
 | `player` | teal | Player markers |
+
+**P3 - deck rotation and default_view.rotation_offset are different things.** A deck's `rotation`
+is the absolute authored orientation of that deck (for example 90 for a ship drawn sideways).
+`default_view.rotation_offset` is a relative turn for the initial GM view. To re-orient a deck, edit
+its `rotation`, not the offset. Both are clockwise-positive degrees.
 
 **P2 — Do not create `map/manifest.yaml` or per-deck `map/*.yaml` files.** The legacy
 `map/` directory format was removed in Phase 29. The loaders `load_map`,
