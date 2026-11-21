@@ -103,7 +103,7 @@ decks:
 |---|---|---|---|
 | `id` | string | yes | Unique deck identifier |
 | `name` | string | yes | Display name |
-| `level` | integer | yes | Sort key — 1 = lowest deck |
+| `level` | integer | yes | Sort key — 1 = lowest deck. Must be unique within the location. In the stacked isometric view a higher level is drawn higher on screen, so the deck above has the larger number |
 | `default` | boolean | no | First deck shown on load |
 | `rotation` | integer | no | Absolute authored orientation of this deck in degrees: 0 (default), 90, 180 or 270. Top-down: the drawing is rotated on screen. Isometric: folded into the grid angle so floors keep true 30-degree axes. Different from `default_view.rotation_offset` - see P3 |
 | `unit_size` | integer | no | Pixels per grid cell. Renderer falls back to 40 when omitted; tools (svg_to_map.py, upload_svg_map, janus-skills) write 30 explicitly - keep writing it explicitly |
@@ -121,7 +121,7 @@ Each room entry in the `rooms:` list.
 
 | Field | Type | Required | Note |
 |---|---|---|---|
-| `id` | string | yes | Unique within this deck |
+| `id` | string | yes | Unique across every deck of the location (room reveal state is one flat room-id map shared by all decks, and stacked ghost decks read it) - see P4 |
 | `name` | string | no | Display label — empty string suppresses label; `\n` (in a double-quoted YAML string, e.g. `"CAPTAIN'S\nQUARTERS"`) renders as a line break on the map |
 | `type` | string | no | `"corridor"` skips label rendering |
 | `rects` | list | shape | Rectangle(s) — see rect fields |
@@ -220,6 +220,15 @@ POIs are entries in a room's `poi:` list. The backend auto-generates `id`, `room
 | `hazard` | red | Dangers, environmental threats |
 | `npc` | teal | NPC markers |
 | `player` | teal | Player markers |
+
+**P4 - room ids must be unique across ALL decks of a location.** Reveal state is one flat map of
+room id to visible, shared by every deck and by the stacked ghost decks. If two decks both define
+`reactor`, revealing or hiding one shows or hides the other, including on ghosts. Fix: rename with a
+deck suffix (for example `reactor_b`) and update every door, POI and detail reference on that deck.
+
+**P5 - decks stack on the shared grid as drawn.** There is no per-deck offset or elevation field.
+Ghost decks use the same grid coordinates and their own `rotation` and `unit_size`, so keep the decks
+of one location aligned in the drawing and keep `rotation` and `unit_size` consistent between them.
 
 **P3 - deck rotation and default_view.rotation_offset are different things.** A deck's `rotation`
 is the absolute authored orientation of that deck (for example 90 for a ship drawn sideways).
